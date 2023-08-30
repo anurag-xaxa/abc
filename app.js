@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose')
 const url = "mongodb://localhost:27017/records";
 const User = require('./models/userSchema')
+const nodemailer = require("nodemailer");
 
 const app = express();
 const port = 6000;
@@ -10,6 +11,44 @@ app.use(express.json())
 app.use(express.urlencoded({ extended:false }))
 
 mongoose.connect(url)
+
+
+// # Email
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST, 
+    port: process.env.SMTP_PORT,
+    secure: false,
+    auth: {
+      // TODO: replace `user` and `pass` values from <https://forwardemail.net>
+      user: process.env.SMTP_EMAIL,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+// # Routes
+app.post('/email', async(req, res) => {
+  
+  const { email, subject, message } = req.body;
+  console.log("Message sent", email, subject, message);  
+  
+  var mailOptions = {
+    from: process.env.SMTP_EMAIL,
+    to: "email", 
+    subject: subject, 
+    message: message,     
+  }
+
+  transporter.sendMail(mailOptions, function (error, data){
+    if(error){
+      console.log(error)
+    }
+    else {
+      console.log("Email sent succesfully", data)
+    }
+  })
+})
+
+  
 
 
 app.get('/', function(req,res){
